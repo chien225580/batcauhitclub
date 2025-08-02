@@ -1,0 +1,149 @@
+<!DOCTYPE html><html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Tool Bắt Cầu Hit Club</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #f1f5f9;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1, h2 {
+      color: #38bdf8;
+      text-align: center;
+    }
+    .hidden { display: none; }
+    .section { margin-bottom: 20px; }
+    button, input[type=text] {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    button {
+      background-color: #38bdf8;
+      color: #0f172a;
+      cursor: pointer;
+    }
+    input[type=text] {
+      width: 100%;
+      background: #1e293b;
+      color: #f8fafc;
+    }
+    .box {
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 10px;
+    }
+    .history {
+      max-height: 150px;
+      overflow-y: auto;
+      background: #1e293b;
+      padding: 10px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔐 Tool Bắt Cầu Hit Club</h1>
+  <div class="section" id="keySection">
+    <input type="text" id="keyInput" placeholder="Nhập key để sử dụng">
+    <button onclick="checkKey()">Xác nhận</button>
+  </div>  <div class="section hidden" id="menuSection">
+    <h2>📊 Bắt Cầu Hit Club</h2>
+    <p>Admin: <strong>TQC</strong></p>
+    <button onclick="showCauSection()">1. Bắt cầu hit club</button>
+    <button onclick="showGiaiThichSection()">2. Giải thích cầu</button>
+    <button onclick="location.reload()">3. Thoát tool</button>
+  </div>  <div class="section hidden" id="cauSection">
+    <input type="text" id="cauInput" placeholder="Nhập 5 kết quả gần nhất (vd: txtxt)">
+    <button onclick="duDoan()">Dự đoán</button>
+    <div class="box" id="ketQua"></div>
+    <input type="text" id="ketQuaThuc" placeholder="Nhập kết quả thật (t hoặc x)">
+    <button onclick="capNhat()">Cập nhật kết quả</button>
+    <div class="box" id="lichSu"></div>
+  </div>  <div class="section hidden" id="giaiThichSection">
+    <input type="text" id="giaiThichInput" placeholder="Nhập chuỗi cầu để giải thích">
+    <button onclick="giaiThichCau()">Giải thích</button>
+    <div class="box" id="giaiThichKetQua"></div>
+  </div>  <script>
+    const KEY = "tx225580";
+    let history = [];
+    let correct = 0, total = 0;
+
+    function checkKey() {
+      const key = document.getElementById("keyInput").value;
+      if (key === KEY) {
+        document.getElementById("keySection").classList.add("hidden");
+        document.getElementById("menuSection").classList.remove("hidden");
+      } else {
+        alert("Sai key!");
+      }
+    }
+
+    function showCauSection() {
+      document.getElementById("cauSection").classList.remove("hidden");
+      document.getElementById("giaiThichSection").classList.add("hidden");
+    }
+
+    function showGiaiThichSection() {
+      document.getElementById("giaiThichSection").classList.remove("hidden");
+      document.getElementById("cauSection").classList.add("hidden");
+    }
+
+    function duDoan() {
+      const cau = document.getElementById("cauInput").value.toLowerCase();
+      if (!/^([tx]){5}$/.test(cau)) return alert("Chuỗi không hợp lệ!");
+      let duDoan = "";
+      let tenCau = "";
+      if (/^(t)\1\1\1/.test(cau)) { duDoan = "t"; tenCau = "Cầu bệt tài"; }
+      else if (/^(x)\1\1\1/.test(cau)) { duDoan = "x"; tenCau = "Cầu bệt xỉu"; }
+      else if (/^(t)(x)\1\2\1/.test(cau)) { duDoan = "x"; tenCau = "Cầu 1-1"; }
+      else if (/^(t)\1(x)\2(t)/.test(cau) || /^(x)\1(t)\2(x)/.test(cau)) { duDoan = cau[4]; tenCau = "Cầu đôi"; }
+      else if (cau[0] === cau[1] && cau[1] === cau[2] && cau[3] !== cau[0]) { duDoan = cau[3]; tenCau = "Cầu 3-1"; }
+      else if (cau === "txtxt" || cau === "xtxtx") { duDoan = cau[4] === "t" ? "x" : "t"; tenCau = "Cầu đảo"; }
+      else if (cau.slice(1, 4) === "xxt" || cau.slice(1, 4) === "ttx") { duDoan = cau[4]; tenCau = "Cầu lặp 3"; }
+      else { duDoan = Math.random() < 0.5 ? "t" : "x"; tenCau = "Không khớp cầu, dự đoán ngẫu nhiên"; }
+      document.getElementById("ketQua").innerText = `📌 Kết quả dự đoán: ${duDoan === "t" ? "Tài" : "Xỉu"}\n📋 Dạng cầu: ${tenCau}`;
+      history.push({ cau, duDoan, tenCau });
+      updateHistory();
+    }
+
+    function capNhat() {
+      const thucTe = document.getElementById("ketQuaThuc").value.toLowerCase();
+      if (!/^([tx])$/.test(thucTe) || history.length === 0) return;
+      const cuoi = history[history.length - 1];
+      const dung = cuoi.duDoan === thucTe;
+      if (dung) correct++;
+      total++;
+      const moi = cuoi.cau.slice(1) + thucTe;
+      document.getElementById("cauInput").value = moi;
+      document.getElementById("ketQua").innerText = `${cuoi.duDoan === "t" ? "Tài" : "Xỉu"} ${dung ? "ĐÚNG ✅" : "SAI ❌"} - Dự đoán tiếp theo:`;
+      duDoan();
+    }
+
+    function updateHistory() {
+      const lichSuText = history.map((item, index) => `#${index + 1}: ${item.cau} → ${item.duDoan.toUpperCase()} (${item.tenCau})`).reverse().join("\n");
+      document.getElementById("lichSu").innerText = `Tỉ lệ đúng: ${total ? ((correct / total * 100).toFixed(1) + "%") : "0%"}\n\n${lichSuText}`;
+    }
+
+    function giaiThichCau() {
+      const input = document.getElementById("giaiThichInput").value.toLowerCase();
+      let text = "Không nhận dạng được dạng cầu.";
+      if (/^(t)\1\1\1/.test(input)) text = "Cầu bệt tài: tài liên tiếp";
+      else if (/^(x)\1\1\1/.test(input)) text = "Cầu bệt xỉu: xỉu liên tiếp";
+      else if (/^(t)(x)\1\2\1/.test(input)) text = "Cầu 1-1: tài xỉu tài xỉu";
+      else if (/^(t)\1(x)\2(t)/.test(input) || /^(x)\1(t)\2(x)/.test(input)) text = "Cầu đôi: 2 cái giống nhau rồi đổi";
+      else if (input[0] === input[1] && input[1] === input[2] && input[3] !== input[0]) text = "Cầu 3-1: 3 giống, 1 khác";
+      else if (input === "txtxt" || input === "xtxtx") text = "Cầu đảo liên tục";
+      else if (input.slice(1, 4) === "xxt" || input.slice(1, 4) === "ttx") text = "Cầu lặp 3";
+      document.getElementById("giaiThichKetQua").innerText = text;
+    }
+  </script></body>
+</html>
